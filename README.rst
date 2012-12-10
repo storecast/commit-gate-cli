@@ -33,6 +33,12 @@ installation
 
   sudo pip install git+http://github.com/txtr/jenkins-cli
 
+If pip is not present on your system : 
+
+::
+
+  sudo apt-get install python-pip
+
 usage
 *****
 ::

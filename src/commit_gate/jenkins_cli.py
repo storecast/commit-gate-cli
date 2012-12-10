@@ -2,7 +2,7 @@
 import cli.app
 from jenkins_api_util import get_status, get_resultset, get_owned_builds, get_job
 
-@cli.app.CommandLineApp
+@cli.app.CommandLineApp(name="commit-gate")
 def jenkins_cli(app):
     jenkinsurl = "http://ci:8080/jenkins"
     jobname = "REAKTOR_commit-gate"

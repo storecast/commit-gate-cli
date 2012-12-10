@@ -10,19 +10,22 @@ Provide a way to trigger a build and to see the latest restult from the command-
 
 ::
 
-  $ jenkins -source pierrehenri.toussaint-1.32 -target reaktor-1.32 build 
+  $ commit-gate -source pierrehenri.toussaint-1.32 -target reaktor-1.32 build 
   Triggering a new build
   status: RUNNING
   url: http://ci:8080/jenkins/job/REAKTOR_commit-gate/2792/
 
 
 ::
-
-  $ jenkins -source pierrehenri.toussaint-1.32 status                     
-  status: ABORTED
-  url: http://ci:8080/jenkins/job/REAKTOR_commit-gate/2791/
-  totalCount:  583
-  failCount:  0
+  $ commit-gate -source pierrehenri.toussaint-1.32 -target reaktor-1.32 status
+  status: FAILURE
+  url: http://ci:8080/jenkins/job/REAKTOR_commit-gate/2806/
+  totalCount:  2912
+  failCount:  121
+  failure: com.bookpac.server.test.catalog.ConvertRetailPriceIT
+  failure: com.bookpac.server.test.catalog.ConvertRetailPriceIT
+  failure: com.bookpac.server.test.content.generic.ContentStatisticIT
+  ...
 
 installation
 *****
@@ -31,7 +34,7 @@ installation
 
 ::
 
-  sudo pip install git+http://github.com/txtr/jenkins-cli
+  sudo pip install git+http://github.com/txtr/commit-gate-cli
 
 If pip is not present on your system : 
 

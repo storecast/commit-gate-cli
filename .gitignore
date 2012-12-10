@@ -1,0 +1,12 @@
+build/
+dist/
+.idea/
+*.egg-info
+*.pyc
+*.class
+
+.DS_Store
+*.tmproj
+
+docs/build/
+.coverage

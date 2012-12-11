@@ -1,8 +1,5 @@
 from jenkinsapi.api import *
 from jenkinsapi.build import *
-import logging
-
-logging.getLogger().addHandler(logging.NullHandler())
 
 def get_job(jenkinsurl, jobname):
     jenkinsci = Jenkins(jenkinsurl)

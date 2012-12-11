@@ -11,7 +11,7 @@ except:
 
 setup(
     name='commit-gate-cli',
-    version='0.0.1',
+    version='0.0.2',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     url='https://github.com/txtr/commit-gate-cli',

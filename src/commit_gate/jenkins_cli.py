@@ -68,7 +68,7 @@ def print_last_build_status(jenkins_url, job_name, source):
     builds = get_owned_builds(jenkins_url, job_name, source)
     if len(builds) == 0:
         print "No build found."
-        pass
+        return
     print_build_status(builds[0])
 
 

@@ -26,10 +26,13 @@ def jenkins_cli(app):
     parser.read(properties_file)
     jenkins_url = parser.get('main', 'jenkins_url')
     job_name = parser.get('main', 'job_name')
-    target = with_version(parser.get('main', 'target_base_name'), app.params.version)
-    source = with_version(parser.get('main', 'source_base_name'), app.params.version)
+    target = target_with_version(parser.get('main', 'target_base_name'), app.params.version)
+    source = source_with_version(parser.get('main', 'source_base_name'), app.params.version)
     if app.params.action == "build":
-        trigger_build(app, jenkins_url, job_name, source, target)
+        try:
+            trigger_build(app, jenkins_url, job_name, source, target)
+        except KeyboardInterrupt:
+            exit("interrupted")
     elif app.params.action == "status":
         print_last_build_status(jenkins_url, job_name, source)
     else:
@@ -37,8 +40,6 @@ def jenkins_cli(app):
 
 jenkins_cli.add_param("action", help="[build|status]", default=False, type=str)
 jenkins_cli.add_param("-v", "--version", help="Specify the version", required=False)
-jenkins_cli.add_param("--block", help="Block the last build until finished", default=False, required=False,
-    action="store_true")
 
 def trigger_build(app, jenkins_url, job_name, source, target):
     job = get_job(jenkins_url, job_name)
@@ -52,11 +53,13 @@ def trigger_build(app, jenkins_url, job_name, source, target):
         print "Build starting (job as queued) !"
 
     print "Triggering a new build for " + source + " !"
-    job.invoke(block=app.params.block,
+    params_block = True
+    job.invoke(block=params_block,
         params={'SourceBranch': source,
                 'TargetBranch': target, 'dryrun': 'false',
                 'delay': '0sec'})
     builds = get_owned_builds(jenkins_url, job_name, source)
+    #    sleep(3) consider sleep when not blocking
     assert len(builds) != 0, "Build not started"
     print_build_status(builds[0])
     notify2.Notification("Build #" + str(builds[0].id()), get_status(builds[0]),
@@ -86,9 +89,16 @@ def print_build_status(build):
                         print("failure: %s" % cases['className'])
 
 
-def with_version(source_base_name, version):
+def source_with_version(source_base_name, version):
     if version is None:
         return source_base_name
+    else:
+        return source_base_name + "-" + version
+
+
+def target_with_version(source_base_name, version):
+    if version is None:
+        return "dev"
     else:
         return source_base_name + "-" + version
 

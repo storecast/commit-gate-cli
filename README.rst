@@ -33,7 +33,7 @@ installation
 
   sudo pip install git+http://github.com/txtr/commit-gate-cli
 
-Write the following configuration in ~/.commit-gate-cli.properties
+Write the following configuration in ~/.commit-gate-cli.properties :
 ::
 
     [main]
@@ -52,4 +52,4 @@ usage
 *****
 ::
 
-  jenkins -h
+  commit-gate -h

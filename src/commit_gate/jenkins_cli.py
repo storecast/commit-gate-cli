@@ -1,23 +1,27 @@
 #!/usr/bin/env python
+import os
+from time import sleep
 import cli.app
-from jenkinsapi.api import get_latest_build
+import notify2
 from jenkins_api_util import get_status, get_resultset, get_owned_builds, get_job
 from ConfigParser import ConfigParser
 from os.path import expanduser, exists
+#from gi.repository import Notify
 
 import logging
 
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.ERROR)
 logging.getLogger().addHandler(ch)
+
 
 @cli.app.CommandLineApp(name="commit-gate")
 def jenkins_cli(app):
     home = expanduser("~")
     properties_file = home + '/.commit-gate-cli.properties'
+    notify2.init('commit-gate-cli')
     if(not exists(properties_file)):
         exit_with_error("Cannot find the config file in " + properties_file)
-
     parser = ConfigParser()
     parser.read(properties_file)
     jenkins_url = parser.get('main', 'jenkins_url')
@@ -25,25 +29,48 @@ def jenkins_cli(app):
     target = with_version(parser.get('main', 'target_base_name'), app.params.version)
     source = with_version(parser.get('main', 'source_base_name'), app.params.version)
     if app.params.action == "build":
-        print "Triggering a new build for " + source + " !"
-        get_job(jenkins_url, job_name).invoke(
-            params={'SourceBranch': source,
-                    'TargetBranch': target, 'dryrun': 'false',
-                    'delay': '0sec'})
-        return
+        trigger_build(app, jenkins_url, job_name, source, target)
     elif app.params.action == "status":
-        print "Last status for " + source + ":"
-        builds = get_owned_builds(jenkins_url, job_name, source)
-        if len(builds) == 0:
-            print "No build found."
-            return
-        build = builds[0]
-        print_build_status(build)
+        print_last_build_status(jenkins_url, job_name, source)
     else:
         exit_with_error("Please specify a correct action [build|status].")
 
 jenkins_cli.add_param("action", help="[build|status]", default=False, type=str)
-jenkins_cli.add_param("-version", help="Specify the version", required=False)
+jenkins_cli.add_param("-v", "--version", help="Specify the version", required=False)
+jenkins_cli.add_param("--block", help="Block the last build until finished", default=False, required=False,
+    action="store_true")
+
+def trigger_build(app, jenkins_url, job_name, source, target):
+    job = get_job(jenkins_url, job_name)
+    total_wait = 0
+    while job.is_queued():
+        print "Job is already queued. Waited %is for %s to begin..." % ( total_wait, job.id() )
+        sleep(15)
+        total_wait += 15
+        notify2.Notification("Build starting !", "(job was queued)",
+            os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
+        print "Build starting (job as queued) !"
+
+    print "Triggering a new build for " + source + " !"
+    job.invoke(block=app.params.block,
+        params={'SourceBranch': source,
+                'TargetBranch': target, 'dryrun': 'false',
+                'delay': '0sec'})
+    builds = get_owned_builds(jenkins_url, job_name, source)
+    assert len(builds) != 0, "Build not started"
+    print_build_status(builds[0])
+    notify2.Notification("Build #" + str(builds[0].id()), get_status(builds[0]),
+        os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
+
+
+def print_last_build_status(jenkins_url, job_name, source):
+    print "Last status for " + source + ":"
+    builds = get_owned_builds(jenkins_url, job_name, source)
+    if len(builds) == 0:
+        print "No build found."
+        pass
+    print_build_status(builds[0])
+
 
 def print_build_status(build):
     print("status: " + get_status(build))

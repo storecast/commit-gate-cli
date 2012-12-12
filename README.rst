@@ -41,6 +41,7 @@ Write the following configuration in ~/.commit-gate-cli.properties :
     job_name = REAKTOR_commit-gate
     source_base_name = YOUR_USER_NAME
     target_base_name = reaktor
+    master_name = dev
 
 If pip is not present on your system : 
 

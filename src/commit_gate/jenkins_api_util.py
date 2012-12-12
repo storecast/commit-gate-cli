@@ -11,19 +11,25 @@ def get_source_branch(build):
     return build.get_actions().get("parameters")[0]['value']
 
 
-def get_owned_builds(jenkinsurl, jobname, branch_name):
-    job = get_job(jenkinsurl, jobname)
+def is_own_build(branch_name, build):
+    return get_source_branch(build) == branch_name
+
+
+def get_owned_builds(job, branch_name):
     build_dict = job.get_build_dict()
     build_ids = [buildid for buildid in sorted(build_dict.keys(), reverse=True)]
     builds = []
     for build_id in build_ids:
         build = job.get_build(build_id)
-        if (get_source_branch(build) == branch_name):
+        if (is_own_build(branch_name, build)):
             builds.append(build)
     return builds
 
 
-def get_status(build):
+def get_new_status(build):
+    """
+     new because build.is_running() triggers poll.
+     """
     if(build.is_running()):
         return "RUNNING"
     return build._data["result"]
@@ -44,3 +50,7 @@ def get_resultset(build):
         raise NoResults(build.STR_TPL_NOTESTS_ERR % ( str(build), buildstatus ))
     obj_results = ResultSet(result_url, build=build)
     return obj_results
+
+
+def has_build_started(job, original_build_no, source):
+    return not is_own_build(source, job.get_last_build()) or original_build_no >= job.get_last_buildnumber()

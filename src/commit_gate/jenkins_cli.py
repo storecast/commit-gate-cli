@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 import os
 from time import sleep
+from urllib2 import HTTPError
 import cli.app
 import notify2
-from jenkins_api_util import get_status, get_resultset, get_owned_builds, get_job
+from commit_gate.jenkins_api_util import has_build_started
+from jenkins_api_util import get_new_status, get_resultset, get_owned_builds, get_job
 from ConfigParser import ConfigParser
 from os.path import expanduser, exists
-#from gi.repository import Notify
-
 import logging
+
+default_master_name = 'dev'
+BUILD_CHECK_DELAY = 300
+BUILD_PRE_DELAY = 10
 
 ch = logging.StreamHandler()
 ch.setLevel(logging.ERROR)
 logging.getLogger().addHandler(ch)
-
 
 @cli.app.CommandLineApp(name="commit-gate")
 def jenkins_cli(app):
@@ -22,61 +25,89 @@ def jenkins_cli(app):
     notify2.init('commit-gate-cli')
     if(not exists(properties_file)):
         exit_with_error("Cannot find the config file in " + properties_file)
-    parser = ConfigParser()
+    parser = ConfigParser({'master_name': default_master_name})
     parser.read(properties_file)
     jenkins_url = parser.get('main', 'jenkins_url')
     job_name = parser.get('main', 'job_name')
-    target = target_with_version(parser.get('main', 'target_base_name'), app.params.version)
+    target = target_with_version(parser.get('main', 'target_base_name'), app.params.version,
+        parser.get('main', 'master_name'))
     source = source_with_version(parser.get('main', 'source_base_name'), app.params.version)
+    job = get_job(jenkins_url, job_name)
+
     if app.params.action == "build":
         try:
-            trigger_build(app, jenkins_url, job_name, source, target)
+            action_trigger_build(job, source, target)
         except KeyboardInterrupt:
             exit("interrupted")
     elif app.params.action == "status":
-        print_last_build_status(jenkins_url, job_name, source)
+        action_print_last_build_status(job, source)
     else:
         exit_with_error("Please specify a correct action [build|status].")
 
 jenkins_cli.add_param("action", help="[build|status]", default=False, type=str)
 jenkins_cli.add_param("-v", "--version", help="Specify the version", required=False)
 
-def trigger_build(app, jenkins_url, job_name, source, target):
-    job = get_job(jenkins_url, job_name)
-    total_wait = 0
-    while job.is_queued():
-        print "Job is already queued. Waited %is for %s to begin..." % ( total_wait, job.id() )
-        sleep(15)
-        total_wait += 15
-        notify2.Notification("Build starting !", "(job was queued)",
-            os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
-        print "Build starting (job as queued) !"
+def action_trigger_build(job, source, target):
+    original_build_no = job.get_last_buildnumber()
 
-    print "Triggering a new build for " + source + " !"
-    params_block = True
-    job.invoke(block=params_block,
-        params={'SourceBranch': source,
-                'TargetBranch': target, 'dryrun': 'false',
-                'delay': '0sec'})
-    builds = get_owned_builds(jenkins_url, job_name, source)
-    #    sleep(3) consider sleep when not blocking
-    assert len(builds) != 0, "Build not started"
-    print_build_status(builds[0])
-    notify2.Notification("Build #" + str(builds[0].id()), get_status(builds[0]),
+    params_block = False # done manually
+    print "Triggering a new build for " + source + "."
+
+    try:
+        job.invoke(block=params_block,
+            params={'SourceBranch': source,
+                    'TargetBranch': target, 'dryrun': 'false',
+                    'delay': '0sec'})
+    except HTTPError as e:
+        exit_with_error(
+            "HTTPError while triggering the build. Please verify your parameters (job: %s, source: %s, target: %s). Cause :%s" % (
+                job, source, target, e.msg))
+
+    block_until_build_started(job, source, original_build_no)
+
+    build = job.get_last_build()
+    print "Build #%s started." % str(build.id())
+    count = 0
+    while build.is_running():
+        total_wait = BUILD_CHECK_DELAY * count
+        print
+        print "Waited %is for build #%s to complete. Status: %s" % (total_wait, build.id(), get_new_status(build))
+        sleep(BUILD_CHECK_DELAY)
+        count += 1
+
+    print_build_status(build)
+    notify2.Notification("Build #" + str(build.id()), get_new_status(build),
         os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
 
 
-def print_last_build_status(jenkins_url, job_name, source):
-    print "Last status for " + source + ":"
-    builds = get_owned_builds(jenkins_url, job_name, source)
+def action_print_last_build_status(job, source):
+    global builds
+    try:
+        builds = get_owned_builds(job, source)
+    except HTTPError as e:
+        exit_with_error(
+            "HTTPError while requesting the build. Please verify your parameters (job: %s, source: %s). Cause : %s" % (
+                job, source, e.msg))
+
+    print "Last status for %s: " % source
     if len(builds) == 0:
         print "No build found."
         return
     print_build_status(builds[0])
 
 
+def block_until_build_started(job, source, original_build_no):
+    sleep(BUILD_PRE_DELAY)
+    total_wait = 0
+    while has_build_started(job, original_build_no, source):
+        print "Job is already queued. Waited %is for %s to begin..." % (total_wait, job.id())
+        sleep(BUILD_PRE_DELAY)
+        total_wait += BUILD_PRE_DELAY
+        job.poll()
+
+
 def print_build_status(build):
-    print("status: " + get_status(build))
+    print("status: " + get_new_status(build))
     print("url: " + build._data['url'])
     if(build.has_resultset()):
         resultset = get_resultset(build)
@@ -96,9 +127,9 @@ def source_with_version(source_base_name, version):
         return source_base_name + "-" + version
 
 
-def target_with_version(source_base_name, version):
+def target_with_version(source_base_name, version, master_name):
     if version is None:
-        return "dev"
+        return master_name
     else:
         return source_base_name + "-" + version
 
@@ -114,19 +145,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

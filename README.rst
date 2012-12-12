@@ -10,18 +10,22 @@ Provide a way to trigger a build and to see the latest result from the command-l
 
 ::
 
-  $ commit-gate -version 1.32 build
-  Triggering a new build for pierrehenri.toussaint-1.32 !
+  $ commit-gate -v 1.32 build
+    Triggering a new build for pierrehenri.toussaint-1.32 ->
+    Build #2903 (http://ci:8080/jenkins/job/REAKTOR_commit-gate/2903/) is RUNNING. Test failures : 0. Started 0s ago.
+    Build #2903 (http://ci:8080/jenkins/job/REAKTOR_commit-gate/2903/) is RUNNING. Test failures : 0. Started 60s ago.
+    Build #2903 (http://ci:8080/jenkins/job/REAKTOR_commit-gate/2903/) is RUNNING. Test failures : 0. Started 120s ago.
+
 ::
 
   $ commit-gate -version 1.32 status
-  status: FAILURE
-  url: http://ci:8080/jenkins/job/REAKTOR_commit-gate/2806/
-  totalCount:  2912
-  failCount:  121
-  failure: com.bookpac.server.test.catalog.ConvertRetailPriceIT
-  failure: com.bookpac.server.test.catalog.ConvertRetailPriceIT
-  failure: com.bookpac.server.test.content.generic.ContentStatisticIT
+  Status: FAILURE
+  Url: http://ci:8080/jenkins/job/REAKTOR_commit-gate/2806/
+  Test count:  2912
+  Test failures:  121
+  Failure: com.bookpac.server.test.catalog.ConvertRetailPriceIT
+  Failure: com.bookpac.server.test.catalog.ConvertRetailPriceIT
+  Failure: com.bookpac.server.test.content.generic.ContentStatisticIT
   ...
 
 installation

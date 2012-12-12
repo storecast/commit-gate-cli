@@ -62,7 +62,10 @@ def get_url(build):
 
 def get_test_cases(build):
     cases = []
-    resultset = get_resultset(build)
+    try:
+        resultset = get_resultset(build)
+    except NoResults:
+        return cases
     for result_module in resultset._data['childReports']:
         for suites in result_module['result']['suites']:
             for case in suites['cases']:
@@ -71,12 +74,18 @@ def get_test_cases(build):
 
 
 def get_total_count(build):
-    resultset = get_resultset(build)
+    try:
+        resultset = get_resultset(build)
+    except NoResults:
+        return 0
     total_count_ = resultset._data['totalCount']
     return total_count_
 
 
 def get_fail_count(build):
-    resultset = get_resultset(build)
+    try:
+        resultset = get_resultset(build)
+    except NoResults:
+        return 0
     fail_count_ = resultset._data['failCount']
     return fail_count_

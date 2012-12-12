@@ -52,6 +52,7 @@ def action_trigger_build(job, source, target):
 
     params_block = False # done manually
     print "Triggering a new build for " + source + "."
+    print
 
     try:
         job.invoke(block=params_block,
@@ -70,7 +71,6 @@ def action_trigger_build(job, source, target):
     count = 0
     while build.is_running():
         total_wait = BUILD_CHECK_DELAY * count
-        print
         print "Waited %is for build #%s to complete. Status: %s" % (total_wait, build.id(), get_new_status(build))
         sleep(BUILD_CHECK_DELAY)
         count += 1

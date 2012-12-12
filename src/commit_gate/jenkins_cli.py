@@ -51,7 +51,7 @@ def action_trigger_build(job, source, target):
     original_build_no = job.get_last_buildnumber()
 
     params_block = False # done manually
-    print "-> Triggering a new build for " + source + "."
+    print "Triggering a new build for " + source + " ->"
     print
 
     try:
@@ -97,7 +97,7 @@ def action_print_last_build_status(job, source):
             "HTTPError while requesting the build. Please verify your parameters (job: %s, source: %s). Cause : %s" % (
                 job, source, e.msg))
 
-    print "Last status for %s: " % source
+    print "Last status for %s: ->" % source
     if len(builds) == 0:
         print "No build found."
         return

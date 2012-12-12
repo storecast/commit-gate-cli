@@ -74,8 +74,7 @@ def action_trigger_build(job, source, target):
         total_wait = BUILD_CHECK_DELAY * count
         fail_count = get_fail_count(build)
         if fail_count > 0 and not fail_notified:
-            notify2.Notification("Build #" + str(build.id()), str("Test failures : %s" % fail_count), os.path.join(
-                os.path.dirname(__file__), 'jenkins.png')).show()
+            notify("Build #" + str(build.id()), str("Test failures : %s" % fail_count))
             fail_notified = True
         print "Build #%s (%s) is %s. Test failures : %s. Started %is ago." % (
             build.id(), get_url(build), status, fail_count, total_wait)
@@ -85,8 +84,7 @@ def action_trigger_build(job, source, target):
 
     sleep(JENKINS_LAG_DELAY)
     print_build_status(build)
-    notify2.Notification("Build #" + str(build.id()), str(get_new_status(build)),
-        os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
+    notify("Build #" + str(build.id()), str(get_new_status(build)))
 
 
 def action_print_last_build_status(job, source):
@@ -138,6 +136,13 @@ def target_with_version(source_base_name, version, master_name):
         return master_name
     else:
         return source_base_name + "-" + version
+
+
+def notify(summary, message):
+    try:
+        notify2.Notification(summary, message, os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
+    except BaseException as e:
+        print "Could not display notification %s" % e.message
 
 
 def exit_with_error(message):

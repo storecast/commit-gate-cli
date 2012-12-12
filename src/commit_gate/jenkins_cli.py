@@ -11,8 +11,9 @@ from os.path import expanduser, exists
 import logging
 
 default_master_name = 'dev'
-BUILD_CHECK_DELAY = 300
-BUILD_PRE_DELAY = 10
+JENKINS_LAG_DELAY = 3
+BUILD_CHECK_DELAY = 60
+BUILD_PRE_DELAY = 30
 
 ch = logging.StreamHandler()
 ch.setLevel(logging.ERROR)
@@ -84,7 +85,7 @@ def action_trigger_build(job, source, target):
         count += 1
         pass
 
-    sleep(3)
+    sleep(JENKINS_LAG_DELAY)
     print_build_status(build)
     notify2.Notification("Build #" + str(build.id()), str(get_new_status(build)),
         os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
@@ -107,7 +108,7 @@ def action_print_last_build_status(job, source):
 
 
 def block_until_build_started(job, source, original_build_no):
-    sleep(BUILD_PRE_DELAY)
+    sleep(JENKINS_LAG_DELAY)
     total_wait = 0
     while has_build_started(job, original_build_no, source):
         print "Job is already queued. Waited %is for %s to begin..." % (total_wait, job.id())

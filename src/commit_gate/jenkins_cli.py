@@ -4,8 +4,8 @@ from time import sleep
 from urllib2 import HTTPError
 import cli.app
 import notify2
-from commit_gate.jenkins_api_util import has_build_started
-from jenkins_api_util import get_new_status, get_resultset, get_owned_builds, get_job
+from commit_gate.jenkins_api_util import has_build_started, get_url, get_test_cases, get_total_count, get_fail_count
+from jenkins_api_util import get_new_status, get_owned_builds, get_job
 from ConfigParser import ConfigParser
 from os.path import expanduser, exists
 import logging
@@ -51,7 +51,7 @@ def action_trigger_build(job, source, target):
     original_build_no = job.get_last_buildnumber()
 
     params_block = False # done manually
-    print "Triggering a new build for " + source + "."
+    print "-> Triggering a new build for " + source + "."
     print
 
     try:
@@ -69,15 +69,23 @@ def action_trigger_build(job, source, target):
     build = job.get_last_build()
     print "Build #%s started." % str(build.id())
     count = 0
+    fail_notified = False
     while build.is_running():
         total_wait = BUILD_CHECK_DELAY * count
-        print "Waited %is for build #%s to complete. Status: %s" % (total_wait, build.id(), get_new_status(build))
+        fail_count = get_fail_count(build)
+        if fail_count > 0 and not fail_notified:
+            notify2.Notification("Build #" + str(build.id()), str("Test failures : %s" % fail_count), os.path.join(
+                os.path.dirname(__file__), 'jenkins.png')).show()
+            fail_notified = True
+
+        print "Waited %is for build #%s (%s) to complete. Status: %s. Test failures : %s" % (
+            total_wait, build.id(), get_url(build), get_new_status(build), fail_count)
         sleep(BUILD_CHECK_DELAY)
         count += 1
 
-    print_build_status(build)
-    notify2.Notification("Build #" + str(build.id()), str(get_new_status(build)),
-        os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
+        print_build_status(build)
+        notify2.Notification("Build #" + str(build.id()), str(get_new_status(build)),
+            os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
 
 
 def action_print_last_build_status(job, source):
@@ -107,17 +115,14 @@ def block_until_build_started(job, source, original_build_no):
 
 
 def print_build_status(build):
-    print("status: " + get_new_status(build))
-    print("url: " + build._data['url'])
+    print(" Status: %s" % get_new_status(build))
+    print(" Url: %s " % get_url(build))
     if(build.has_resultset()):
-        resultset = get_resultset(build)
-        print("totalCount:  %s" % resultset._data['totalCount'])
-        print("failCount:  %s" % resultset._data['failCount'])
-        for result_module in resultset._data['childReports']:
-            for suites in result_module['result']['suites']:
-                for cases in suites['cases']:
-                    if(cases['status'] == "REGRESSION"):
-                        print("failure: %s" % cases['className'])
+        print(" Test count:  %s" % get_total_count(build))
+        print(" Test failures:  %s" % get_fail_count(build))
+        for case in get_test_cases(build):
+            if(case['status'] == "REGRESSION"):
+                print(" Failure: %s" % case['className'])
 
 
 def source_with_version(source_base_name, version):

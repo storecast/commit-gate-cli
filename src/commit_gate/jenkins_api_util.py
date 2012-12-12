@@ -54,3 +54,29 @@ def get_resultset(build):
 
 def has_build_started(job, original_build_no, source):
     return not is_own_build(source, job.get_last_build()) or original_build_no >= job.get_last_buildnumber()
+
+
+def get_url(build):
+    return build._data['url']
+
+
+def get_test_cases(build):
+    cases = []
+    resultset = get_resultset(build)
+    for result_module in resultset._data['childReports']:
+        for suites in result_module['result']['suites']:
+            for case in suites['cases']:
+                cases.append(case)
+    return cases
+
+
+def get_total_count(build):
+    resultset = get_resultset(build)
+    total_count_ = resultset._data['totalCount']
+    return total_count_
+
+
+def get_fail_count(build):
+    resultset = get_resultset(build)
+    fail_count_ = resultset._data['failCount']
+    return fail_count_

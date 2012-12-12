@@ -76,7 +76,7 @@ def action_trigger_build(job, source, target):
         count += 1
 
     print_build_status(build)
-    notify2.Notification("Build #" + str(build.id()), get_new_status(build),
+    notify2.Notification("Build #" + str(build.id()), str(get_new_status(build)),
         os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
 
 

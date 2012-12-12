@@ -71,21 +71,23 @@ def action_trigger_build(job, source, target):
     count = 0
     fail_notified = False
     while build.is_running():
+        status = get_new_status(build)
         total_wait = BUILD_CHECK_DELAY * count
         fail_count = get_fail_count(build)
         if fail_count > 0 and not fail_notified:
             notify2.Notification("Build #" + str(build.id()), str("Test failures : %s" % fail_count), os.path.join(
                 os.path.dirname(__file__), 'jenkins.png')).show()
             fail_notified = True
-
         print "Waited %is for build #%s (%s) to complete. Status: %s. Test failures : %s" % (
-            total_wait, build.id(), get_url(build), get_new_status(build), fail_count)
+            total_wait, build.id(), get_url(build), status, fail_count)
         sleep(BUILD_CHECK_DELAY)
         count += 1
+        pass
 
-        print_build_status(build)
-        notify2.Notification("Build #" + str(build.id()), str(get_new_status(build)),
-            os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
+    sleep(3)
+    print_build_status(build)
+    notify2.Notification("Build #" + str(build.id()), str(get_new_status(build)),
+        os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
 
 
 def action_print_last_build_status(job, source):
@@ -97,7 +99,7 @@ def action_print_last_build_status(job, source):
             "HTTPError while requesting the build. Please verify your parameters (job: %s, source: %s). Cause : %s" % (
                 job, source, e.msg))
 
-    print "Last status for %s: ->" % source
+    print "Last status for %s ->" % source
     if len(builds) == 0:
         print "No build found."
         return

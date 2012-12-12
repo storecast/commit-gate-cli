@@ -53,7 +53,6 @@ def action_trigger_build(job, source, target):
 
     params_block = False # done manually
     print "Triggering a new build for " + source + " ->"
-    print
 
     try:
         job.invoke(block=params_block,
@@ -68,7 +67,6 @@ def action_trigger_build(job, source, target):
     block_until_build_started(job, source, original_build_no)
 
     build = job.get_last_build()
-    print "Build #%s started." % str(build.id())
     count = 0
     fail_notified = False
     while build.is_running():
@@ -79,8 +77,8 @@ def action_trigger_build(job, source, target):
             notify2.Notification("Build #" + str(build.id()), str("Test failures : %s" % fail_count), os.path.join(
                 os.path.dirname(__file__), 'jenkins.png')).show()
             fail_notified = True
-        print "Waited %is for build #%s (%s) to complete. Status: %s. Test failures : %s" % (
-            total_wait, build.id(), get_url(build), status, fail_count)
+        print "Build #%s (%s) is %s. Test failures : %s. Started %is ago." % (
+            build.id(), get_url(build), status, fail_count, total_wait)
         sleep(BUILD_CHECK_DELAY)
         count += 1
         pass

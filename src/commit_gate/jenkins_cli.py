@@ -23,8 +23,6 @@ logging.getLogger().addHandler(ch)
 def jenkins_cli(app):
     home = expanduser("~")
     properties_file = home + '/.commit-gate-cli.properties'
-    notify("test","test")
-    notify("2","test")
     if(not exists(properties_file)):
         exit_with_error("Cannot find the config file in " + properties_file)
     parser = ConfigParser({'master_name': default_master_name})

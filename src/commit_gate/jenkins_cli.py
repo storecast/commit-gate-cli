@@ -23,7 +23,8 @@ logging.getLogger().addHandler(ch)
 def jenkins_cli(app):
     home = expanduser("~")
     properties_file = home + '/.commit-gate-cli.properties'
-    notify2.init('commit-gate-cli')
+    notify("test","test")
+    notify("2","test")
     if(not exists(properties_file)):
         exit_with_error("Cannot find the config file in " + properties_file)
     parser = ConfigParser({'master_name': default_master_name})
@@ -140,6 +141,7 @@ def target_with_version(source_base_name, version, master_name):
 
 def notify(summary, message):
     try:
+        notify2.init('commit-gate-cli')
         notify2.Notification(summary, message, os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()
     except BaseException as e:
         print "Could not display notification %s" % e.message

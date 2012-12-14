@@ -103,7 +103,6 @@ def action_print_last_build_status(job, source):
 
 
 def block_until_build_started(job, source, original_build_no):
-    sleep(JENKINS_LAG_DELAY)
     total_wait = 0
     while has_build_started(job, original_build_no, source):
         print "Job is already queued. Waited %is for %s to begin..." % (total_wait, job.id())

@@ -3,7 +3,11 @@ import os
 from time import sleep
 from urllib2 import HTTPError
 import cli.app
-import notify2
+try:
+    import notify2 # Not working on mac
+    notify2_available = True
+except ImportError:
+    notify2_available = False
 from commit_gate.jenkins_api_util import has_build_started, get_url, get_test_cases, get_total_count, get_fail_count
 from jenkins_api_util import get_new_status, get_owned_builds, get_job
 from ConfigParser import ConfigParser
@@ -137,6 +141,8 @@ def target_with_version(source_base_name, version, master_name):
 
 
 def notify(summary, message):
+    if not notify2_available:
+        return
     try:
         notify2.init('commit-gate-cli')
         notify2.Notification(summary, message, os.path.join(os.path.dirname(__file__), 'jenkins.png')).show()

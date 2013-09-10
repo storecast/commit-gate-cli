@@ -11,7 +11,7 @@ except:
 
 setup(
     name='commit-gate-cli',
-    version='0.1.3',
+    version='0.1.4',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     url='https://github.com/txtr/commit-gate-cli',
@@ -35,6 +35,8 @@ setup(
         'Programming Language :: Python',
         'Topic :: Software Development :: Bug Tracking',
     ],
-    install_requires=['jenkinsapi', 'pyCLI', "notify2"],
-    tests_require=["mock"]
+    install_requires=['jenkinsapi', 'pyCLI'],
+    extras_require = {
+           'notify2':  ["dbus"]
+       }
 )

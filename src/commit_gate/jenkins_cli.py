@@ -40,7 +40,7 @@ def jenkins_cli(app):
 
     if app.params.action == "build":
         try:
-            action_trigger_build(job, source, target)
+            action_trigger_build(job, source, target,app.params.dryrun)
         except KeyboardInterrupt:
             exit("interrupted")
     elif app.params.action == "status":
@@ -50,17 +50,19 @@ def jenkins_cli(app):
 
 jenkins_cli.add_param("action", help="[build|status]", default=False, type=str)
 jenkins_cli.add_param("-v", "--version", help="Specify the version", required=False)
+jenkins_cli.add_param("-d", "--dryrun", help="Dry run", default=False, action="store_true")
 
-def action_trigger_build(job, source, target):
+def action_trigger_build(job, source, target, dryrun):
     original_build_no = job.get_last_buildnumber()
 
     params_block = False # done manually
     print "Triggering a new build for " + source + " ->"
-
+    
     try:
         job.invoke(block=params_block,
             params={'SourceBranch': source,
-                    'TargetBranch': target, 'dryrun': 'false',
+                    'TargetBranch': target, 
+                    'dryrun': 'false',
                     'delay': '0sec'})
     except HTTPError as e:
         exit_with_error(

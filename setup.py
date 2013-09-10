@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python',
         'Topic :: Software Development :: Bug Tracking',
     ],
-    install_requires=['jenkinsapi', 'pyCLI'],
+    install_requires=['jenkinsapi == 0.1.11', 'pyCLI'],
     extras_require = {
            'notify2':  ["dbus"]
        }

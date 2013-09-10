@@ -51,8 +51,8 @@ def jenkins_cli(app):
 jenkins_cli.add_param("action", help="[build|status]", default=False, type=str)
 jenkins_cli.add_param("-v", "--version", help="Specify the version", required=False)
 jenkins_cli.add_param("-d", "--dryrun", help="Dry run", default=False, action="store_true")
-jenkins_cli.add_param("-s", "--source", help="Specify the source branche", required=False)
-jenkins_cli.add_param("-t", "--target", help="Specify the target branche", required=False)
+jenkins_cli.add_param("-s", "--source", help="Specify the source branch", required=False)
+jenkins_cli.add_param("-t", "--target", help="Specify the target branch", required=False)
 
 def action_trigger_build(job, source, target, dryrun):
     original_build_no = job.get_last_buildnumber()

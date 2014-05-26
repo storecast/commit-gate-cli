@@ -59,10 +59,9 @@ def action_trigger_build(job, source, target, dryrun):
 
     params_block = False # done manually
     print "Triggering a new build for " + source + " -> " + target + " :"
-    print str(dryrun).lower()
     try:
         job.invoke(block=params_block,
-            params={'SourceBranch': source,
+            build_params={'SourceBranch': source,
                     'TargetBranch': target, 
                     'dryrun': str(dryrun).lower(),
                     'delay': '0sec'})
@@ -81,17 +80,17 @@ def action_trigger_build(job, source, target, dryrun):
         total_wait = BUILD_CHECK_DELAY * count
         fail_count = get_fail_count(build)
         if fail_count > 0 and not fail_notified:
-            notify("Build #" + str(build.id()), str("Test failures : %s" % fail_count))
+            notify("Build #" + str(build.get_number()), str("Test failures : %s" % fail_count))
             fail_notified = True
         print "Build #%s (%s) is %s. Test failures : %s. Started %is ago." % (
-            build.id(), get_url(build), status, fail_count, total_wait)
+            build.get_number(), get_url(build), status, fail_count, total_wait)
         sleep(BUILD_CHECK_DELAY)
         count += 1
         pass
 
     sleep(JENKINS_LAG_DELAY)
     print_build_status(build)
-    notify("Build #" + str(build.id()), str(get_new_status(build)))
+    notify("Build #" + str(build.get_number()), str(get_new_status(build)))
 
 
 def action_print_last_build_status(job, source):

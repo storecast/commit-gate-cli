@@ -112,7 +112,7 @@ def action_print_last_build_status(job, source):
 def block_until_build_started(job, source, original_build_no):
     total_wait = 0
     while has_build_started(job, original_build_no, source):
-        print "Job is already queued. Waited %is for %s to begin..." % (total_wait, job.id())
+        print "Job is already queued. Waited %is for %s to begin..." % (total_wait, job.get_last_buildnumber())
         sleep(BUILD_PRE_DELAY)
         total_wait += BUILD_PRE_DELAY
         job.poll()

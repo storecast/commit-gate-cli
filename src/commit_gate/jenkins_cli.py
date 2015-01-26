@@ -82,8 +82,8 @@ def action_trigger_build(job, source, target, dryrun):
         if fail_count > 0 and not fail_notified:
             notify("Build #" + str(build.get_number()), str("Test failures : %s" % fail_count))
             fail_notified = True
-        print "Build #%s (%s) is %s. Test failures : %s. Started %is ago." % (
-            build.get_number(), get_url(build), status, fail_count, total_wait)
+        print "Build #%s (%s) is %s. Test failures : %s. Started %im ago." % (
+            build.get_number(), get_url(build), status, fail_count, total_wait / 60)
         sleep(BUILD_CHECK_DELAY)
         count += 1
         pass
